@@ -6,6 +6,7 @@ enum VarItemListIndex {
     VarItemListIndexSubghzExtend,
     VarItemListIndexGpioPins,
     VarItemListIndexFileNamingPrefix,
+    VarItemListIndexOpenBlePairing,
 };
 
 void momentum_app_scene_protocols_var_item_list_callback(void* context, uint32_t index) {
@@ -29,6 +30,15 @@ static void momentum_app_scene_protocols_file_naming_prefix_changed(VariableItem
     variable_item_set_current_value_text(item, value ? "After" : "Before");
     momentum_settings.file_naming_prefix_after = value;
     app->save_settings = true;
+}
+
+static void momentum_app_scene_protocols_open_ble_pairing_changed(VariableItem* item) {
+    MomentumApp* app = variable_item_get_context(item);
+    bool value = variable_item_get_current_value_index(item);
+    variable_item_set_current_value_text(item, value ? "ON" : "OFF");
+    momentum_settings.open_ble_pairing = value;
+    app->save_settings = true;
+    app->require_reboot = true;
 }
 
 void momentum_app_scene_protocols_on_enter(void* context) {
@@ -70,6 +80,15 @@ void momentum_app_scene_protocols_on_enter(void* context) {
     variable_item_set_current_value_index(item, momentum_settings.file_naming_prefix_after);
     variable_item_set_current_value_text(
         item, momentum_settings.file_naming_prefix_after ? "After" : "Before");
+
+    item = variable_item_list_add(
+        var_item_list,
+        "Open BLE Pairing",
+        2,
+        momentum_app_scene_protocols_open_ble_pairing_changed,
+        app);
+    variable_item_set_current_value_index(item, momentum_settings.open_ble_pairing);
+    variable_item_set_current_value_text(item, momentum_settings.open_ble_pairing ? "ON" : "OFF");
 
     variable_item_list_set_enter_callback(
         var_item_list, momentum_app_scene_protocols_var_item_list_callback, app);

@@ -73,6 +73,7 @@ typedef struct {
     bool bad_pins_format;
     bool allow_locked_rpc_usb;
     bool allow_locked_rpc_ble;
+    bool open_ble_pairing;
     bool lockscreen_poweroff;
     bool lockscreen_time;
     bool lockscreen_seconds;

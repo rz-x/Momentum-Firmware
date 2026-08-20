@@ -8,6 +8,7 @@
 
 #include "serial_service_uuid.inc"
 #include <stdint.h>
+#include <momentum/momentum.h>
 
 #define TAG "BtSerialSvc"
 
@@ -163,9 +164,18 @@ BleServiceSerial* ble_svc_serial_start(void) {
         free(serial_svc);
         return NULL;
     }
+    // Momentum: Open BLE Pairing (opt-in) — register RX/TX without authentication so a
+    // non-bonding central can use them. Copy the const params and relax permissions.
+    BleGattCharacteristicParams chars[SerialSvcGattCharacteristicCount];
+    memcpy(chars, ble_svc_serial_chars, sizeof(chars));
+    if(momentum_settings.open_ble_pairing) {
+        for(uint8_t i = 0; i < SerialSvcGattCharacteristicCount; i++) {
+            chars[i].security_permissions = ATTR_PERMISSION_NONE;
+        }
+    }
     for(uint8_t i = 0; i < SerialSvcGattCharacteristicCount; i++) {
         ble_gatt_characteristic_init(
-            serial_svc->svc_handle, &ble_svc_serial_chars[i], &serial_svc->chars[i]);
+            serial_svc->svc_handle, &chars[i], &serial_svc->chars[i]);
     }
 
     ble_svc_serial_update_rpc_char(serial_svc, SerialServiceRpcStatusNotActive);

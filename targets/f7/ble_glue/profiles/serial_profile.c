@@ -7,6 +7,7 @@
 #include <services/serial_service.h>
 #include <furi.h>
 #include <ble/core/ble_defs.h>
+#include <momentum/momentum.h>
 
 typedef struct {
     FuriHalBleProfileBase base;
@@ -69,6 +70,12 @@ static void
 
     furi_check(config);
     memcpy(config, &serial_template_config, sizeof(GapConfig));
+    // Momentum: Open BLE Pairing (opt-in) — let non-bonding centrals (e.g. Garmin
+    // Connect IQ) reach the serial/RPC service by dropping bonding + MITM to Just Works.
+    if(momentum_settings.open_ble_pairing) {
+        config->bonding_mode = false;
+        config->pairing_method = GapPairingNone;
+    }
     // Set mac address
     memcpy(config->mac_address, furi_hal_version_get_ble_mac(), sizeof(config->mac_address));
     // Set advertise name

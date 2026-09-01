@@ -10,6 +10,7 @@ enum BtSetting {
 enum BtSettingIndex {
     BtSettingIndexSwitchBt,
     BtSettingIndexForgetDev,
+    BtSettingIndexOpenBlePairing,
 };
 
 const char* const bt_settings_text[BtSettingNum] = {
@@ -23,6 +24,14 @@ static void bt_settings_scene_start_var_list_change_callback(VariableItem* item)
 
     variable_item_set_current_value_text(item, bt_settings_text[index]);
     view_dispatcher_send_custom_event(app->view_dispatcher, index);
+}
+
+static void bt_settings_scene_start_open_ble_pairing_change_callback(VariableItem* item) {
+    BtSettingsApp* app = variable_item_get_context(item);
+    bool enabled = variable_item_get_current_value_index(item);
+    variable_item_set_current_value_text(item, enabled ? "ON" : "OFF");
+    momentum_settings.open_ble_pairing = enabled;
+    app->reboot_required = true;
 }
 
 static void bt_settings_scene_start_var_list_enter_callback(void* context, uint32_t index) {
@@ -54,6 +63,15 @@ void bt_settings_scene_start_on_enter(void* context) {
             variable_item_set_current_value_text(item, bt_settings_text[BtSettingOff]);
         }
         variable_item_list_add(var_item_list, "Unpair All Devices", 1, NULL, NULL);
+        item = variable_item_list_add(
+            var_item_list,
+            "Open BLE Pairing",
+            2,
+            bt_settings_scene_start_open_ble_pairing_change_callback,
+            app);
+        variable_item_set_current_value_index(item, momentum_settings.open_ble_pairing);
+        variable_item_set_current_value_text(
+            item, momentum_settings.open_ble_pairing ? "ON" : "OFF");
         variable_item_list_set_enter_callback(
             var_item_list, bt_settings_scene_start_var_list_enter_callback, app);
     } else {

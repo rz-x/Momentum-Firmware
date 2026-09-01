@@ -17,6 +17,8 @@ BtSettingsApp* bt_settings_app_alloc(void) {
 
     app->gui = furi_record_open(RECORD_GUI);
     app->bt = furi_record_open(RECORD_BT);
+    app->power = furi_record_open(RECORD_POWER);
+    app->reboot_required = false;
 
     // View Dispatcher and Scene Manager
     app->view_dispatcher = view_dispatcher_alloc();
@@ -55,6 +57,10 @@ BtSettingsApp* bt_settings_app_alloc(void) {
 void bt_settings_app_free(BtSettingsApp* app) {
     furi_assert(app);
     bt_set_settings(app->bt, &app->settings);
+    if(app->reboot_required) {
+        momentum_settings_save();
+        power_reboot(app->power, PowerBootModeNormal);
+    }
     // Gui modules
     view_dispatcher_remove_view(app->view_dispatcher, BtSettingsAppViewVarItemList);
     variable_item_list_free(app->var_item_list);
@@ -72,6 +78,7 @@ void bt_settings_app_free(BtSettingsApp* app) {
     // Records
     furi_record_close(RECORD_GUI);
     furi_record_close(RECORD_BT);
+    furi_record_close(RECORD_POWER);
     free(app);
 }
 

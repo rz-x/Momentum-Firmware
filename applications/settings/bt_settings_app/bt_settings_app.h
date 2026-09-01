@@ -13,6 +13,8 @@
 
 #include <bt/bt_service/bt.h>
 #include <bt/bt_service/bt_settings_api_i.h>
+#include <momentum/settings.h>
+#include <power/power_service/power.h>
 
 #include <assets_icons.h>
 
@@ -29,6 +31,7 @@ enum BtSettingsCustomEvent {
 typedef struct {
     BtSettings settings;
     Bt* bt;
+    Power* power;
     Gui* gui;
     SceneManager* scene_manager;
     ViewDispatcher* view_dispatcher;
@@ -36,6 +39,7 @@ typedef struct {
     VariableItemList* var_item_list;
     DialogEx* dialog;
     Popup* popup;
+    bool reboot_required;
 } BtSettingsApp;
 
 typedef enum {

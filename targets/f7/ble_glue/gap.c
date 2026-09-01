@@ -8,6 +8,7 @@
 #include <furi_hal.h>
 #include <furi.h>
 #include <stdint.h>
+#include <momentum/settings.h>
 
 #define TAG "BleGap"
 
@@ -196,6 +197,13 @@ BleEventFlowStatus ble_event_app_notification(void* pckt) {
             if(gap->config->pairing_method != GapPairingNone) {
                 // Start pairing by sending security request
                 aci_gap_slave_security_req(event->Connection_Handle);
+            } else {
+                // Momentum: Open BLE Pairing (Just Works, no pairing). Normally GapEventTypeConnected
+                // is emitted only on ACI_GAP_PAIRING_COMPLETE — which never fires without pairing —
+                // so the bt service would never open the RPC session. Emit it here instead, so an
+                // unbonded central (e.g. a Garmin watch) can actually use RPC.
+                GapEvent connected_event = {.type = GapEventTypeConnected};
+                gap->on_event_cb(connected_event, gap->context);
             }
         } break;
 
@@ -434,6 +442,15 @@ static void gap_advertise_start(GapState new_state) {
         min_interval = 0x0640; // 1 s
         max_interval = 0x0fa0; // 2.5 s
     }
+    // Momentum: Open BLE Pairing (opt-in) — force the fast advertising interval even in the
+    // low-power state. Low-duty-cycle central scanners (notably Garmin Connect IQ) reliably
+    // catch ~100 ms beacons but miss the stock 1–2.5 s low-power beacons, so the watch never
+    // discovers the Flipper. Costs a little standby battery while the toggle is ON; stock timing
+    // is unchanged when OFF.
+    if(momentum_settings.open_ble_pairing) {
+        min_interval = 0x80; // 80 ms
+        max_interval = 0xa0; // 100 ms
+    }
     // Stop advertising timer
     furi_timer_stop(gap->advertise_timer);
 
@@ -451,6 +468,10 @@ static void gap_advertise_start(GapState new_state) {
     if(gap->service.mfg_data_len > 0) {
         hci_le_set_scan_response_data(gap->service.mfg_data_len, gap->service.mfg_data);
     }
+
+    // NOTE: keep the 16-bit service UUID (0x3080) in the advertisement. Connect IQ's scanner
+    // only surfaces peripherals that advertise a 16-bit service UUID (per Garmin CIQ bug
+    // reports), so the Flipper MUST keep advertising 0x3080 for a Garmin watch to discover it.
 
     // Configure advertising
     status = aci_gap_set_discoverable(

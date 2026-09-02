@@ -8,6 +8,7 @@
 #include <gui/elements.h>
 #include <assets_icons.h>
 #include <profiles/serial_profile.h>
+#include <momentum/momentum.h>
 
 #define TAG "BtSrv"
 
@@ -156,7 +157,14 @@ static void bt_battery_level_changed_callback(const void* _event, void* context)
 Bt* bt_alloc(void) {
     Bt* bt = malloc(sizeof(Bt));
     // Init default maximum packet size
-    bt->max_packet_size = BLE_PROFILE_SERIAL_PACKET_SIZE_MAX;
+    // The ATT default MTU is 23 (20 usable bytes). Assuming the 486-byte maximum BEFORE an MTU
+    // exchange has actually raised it silently truncates every packet for a central that never
+    // negotiates a larger MTU (e.g. Garmin Connect IQ): the Flipper advances its send pointer by
+    // 486 while only 20 bytes reach the client, so 466 of every 486 bytes are lost and the client
+    // reassembles garbage. Start at the safe default; GapEventTypeUpdateMTU raises it if the
+    // central actually negotiates more.
+    bt->max_packet_size =
+        momentum_settings.open_ble_pairing ? 20 : BLE_PROFILE_SERIAL_PACKET_SIZE_MAX;
     bt->current_profile = NULL;
     // Keys storage
     bt->keys_storage = bt_keys_storage_alloc(BT_KEYS_STORAGE_PATH);
@@ -227,6 +235,7 @@ static void bt_rpc_send_bytes_callback(void* context, uint8_t* bytes, size_t byt
         // Early stop from sending if we're already disconnected
         return;
     }
+    FURI_LOG_I(TAG, "TXMSG %u mps=%u", (unsigned)bytes_len, (unsigned)bt->max_packet_size);
     furi_event_flag_clear(bt->rpc_event, BT_RPC_EVENT_ALL & (~BT_RPC_EVENT_DISCONNECTED));
     size_t bytes_sent = 0;
     while(bytes_sent < bytes_len) {
@@ -238,13 +247,16 @@ static void bt_rpc_send_bytes_callback(void* context, uint8_t* bytes, size_t byt
             ble_profile_serial_tx(bt->current_profile, &bytes[bytes_sent], bytes_remain);
             bytes_sent += bytes_remain;
         }
-        // We want BT_RPC_EVENT_DISCONNECTED to stick, so don't clear
+        // Wait for the client's per-packet confirmation (INDICATE). This guarantees delivery: a
+        // dropped packet would shift the remainder of the frame. Cheap now that max_packet_size
+        // matches the real MTU — the earlier "INDICATE is unusably slow" was the 486-byte
+        // truncation bug, not the confirmations.
+        // We want BT_RPC_EVENT_DISCONNECTED to stick, so don't clear.
         uint32_t event_flag = furi_event_flag_wait(
             bt->rpc_event, BT_RPC_EVENT_ALL, FuriFlagWaitAny | FuriFlagNoClear, FuriWaitForever);
         if(event_flag & BT_RPC_EVENT_DISCONNECTED) {
             break;
         } else {
-            // If we didn't get BT_RPC_EVENT_DISCONNECTED, then clear everything else
             furi_event_flag_clear(bt->rpc_event, BT_RPC_EVENT_ALL & (~BT_RPC_EVENT_DISCONNECTED));
         }
     }

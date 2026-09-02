@@ -238,20 +238,34 @@ bool ble_svc_serial_update_tx(BleServiceSerial* serial_svc, uint8_t* data, uint1
         return false;
     }
 
+    // Last-chunk update type: 0x02 = INDICATION (stock), 0x01 = NOTIFICATION (Open BLE Pairing).
+    const uint8_t last_update_type = 0x02;   // INDICATION: confirmed per packet, cannot be dropped
+
     for(uint16_t remained = data_len; remained > 0;) {
         uint8_t value_len = MIN(BLE_SVC_SERIAL_CHAR_VALUE_LEN_MAX, remained);
         uint16_t value_offset = data_len - remained;
         remained -= value_len;
 
-        tBleStatus result = aci_gatt_update_char_value_ext(
-            0,
-            serial_svc->svc_handle,
-            serial_svc->chars[SerialSvcGattCharacteristicTx].handle,
-            remained ? 0x00 : 0x02,
-            data_len,
-            value_offset,
-            value_len,
-            data + value_offset);
+        // With NOTIFY there is no per-packet confirmation to pace us, so the controller's TX
+        // pool can fill up: retry on INSUFFICIENT_RESOURCES (same pattern as ble_gatt.c) to
+        // provide flow control. INDICATE is paced by the client confirmation and rarely hits this.
+        tBleStatus result;
+        size_t retries = 1000;
+        do {
+            result = aci_gatt_update_char_value_ext(
+                0,
+                serial_svc->svc_handle,
+                serial_svc->chars[SerialSvcGattCharacteristicTx].handle,
+                remained ? 0x00 : last_update_type,
+                data_len,
+                value_offset,
+                value_len,
+                data + value_offset);
+            if(result == BLE_STATUS_INSUFFICIENT_RESOURCES) {
+                furi_delay_ms(1);
+                retries--;
+            }
+        } while(result == BLE_STATUS_INSUFFICIENT_RESOURCES && retries);
 
         if(result) {
             FURI_LOG_E(TAG, "Failed updating TX characteristic: %d", result);

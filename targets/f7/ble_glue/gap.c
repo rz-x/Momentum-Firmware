@@ -57,6 +57,10 @@ static Gap* gap = NULL;
 static void gap_advertise_start(GapState new_state);
 static int32_t gap_app(void* context);
 
+// Set once the central has answered an MTU exchange, so the retry below fires at most once
+// per connection. Cleared on disconnect.
+static bool gap_mtu_exchange_done = false;
+
 static void gap_verify_connection_parameters(Gap* gap) {
     furi_check(gap);
 
@@ -80,8 +84,12 @@ static void gap_verify_connection_parameters(Gap* gap) {
     // We do care about lower connection interval bound a lot: if it's lower than 30ms 2nd core will not allow us to use flash controller
     bool negotiation_failed = params->conn_int_min > gap->connection_params.conn_interval;
 
-    // We don't care about upper bound till connection become secure
-    if(gap->is_secure) {
+    // We don't care about upper bound till connection become secure...
+    // ...EXCEPT on an unbonded Just Works link, where the connection never becomes "secure" at all
+    // (is_secure is only set from ACI_GAP_SLAVE_SECURITY_INITIATED, which requires pairing). Without
+    // this, such a link silently accepts whatever interval the central picked — Garmin Connect IQ
+    // hands out ~500 ms — and never asks for better, so a 1 KB screen frame takes ~a minute.
+    if(gap->is_secure || gap->config->pairing_method == GapPairingNone) {
         negotiation_failed |= connection_interval_max < gap->connection_params.conn_interval;
     }
 
@@ -139,6 +147,7 @@ BleEventFlowStatus ble_event_app_notification(void* pckt) {
         }
         gap->is_secure = false;
         gap->negotiation_round = 0;
+        gap_mtu_exchange_done = false;
         // Enterprise sleep
         furi_delay_us(666 + 666);
         if(gap->enable_adv) {
@@ -160,6 +169,15 @@ BleEventFlowStatus ble_event_app_notification(void* pckt) {
             gap->connection_params.supervisor_timeout = event->Supervision_Timeout;
             FURI_LOG_I(TAG, "Connection parameters event complete");
             gap_verify_connection_parameters(gap);
+            // Retry the MTU exchange here if the attempt made at connection time was rejected.
+            // Requesting it from inside HCI_LE_CONNECTION_COMPLETE is too early on some centrals
+            // and returns BLE_STATUS_FAILED; by the time the connection parameters have been
+            // updated the link is settled and the same request is accepted. Staying at the
+            // 23-byte default costs ~52 round trips per 1 KB screen frame instead of ~5.
+            if(!gap_mtu_exchange_done && gap->service.connection_handle != 0) {
+                tBleStatus retry_status = aci_gatt_exchange_config(gap->service.connection_handle);
+                FURI_LOG_I(TAG, "MTU exchange retry: status=%d", retry_status);
+            }
             break;
         }
 
@@ -204,6 +222,16 @@ BleEventFlowStatus ble_event_app_notification(void* pckt) {
                 // unbonded central (e.g. a Garmin watch) can actually use RPC.
                 GapEvent connected_event = {.type = GapEventTypeConnected};
                 gap->on_event_cb(connected_event, gap->context);
+
+                // Ask the central to raise the ATT MTU. Some centrals (Connect IQ) never initiate
+                // the exchange themselves and would leave us at the 23-byte default, i.e. 20 usable
+                // bytes per packet — a 1 KB screen frame then costs ~52 round trips. If the peer
+                // agrees to a larger MTU, ACI_ATT_EXCHANGE_MTU_RESP raises max_packet_size and the
+                // same frame needs a fraction of the packets.
+                tBleStatus mtu_status = aci_gatt_exchange_config(event->Connection_Handle);
+                if(mtu_status) {
+                    FURI_LOG_W(TAG, "MTU exchange request failed: %d", mtu_status);
+                }
             }
         } break;
 
@@ -237,6 +265,7 @@ BleEventFlowStatus ble_event_app_notification(void* pckt) {
         case ACI_ATT_EXCHANGE_MTU_RESP_VSEVT_CODE: {
             aci_att_exchange_mtu_resp_event_rp0* pr = (void*)blue_evt->data;
             FURI_LOG_I(TAG, "Rx MTU size: %d", pr->Server_RX_MTU);
+            gap_mtu_exchange_done = true;
             // Set maximum packet size given header size is 3 bytes
             GapEvent event = {
                 .type = GapEventTypeUpdateMTU, .data.max_packet_size = pr->Server_RX_MTU - 3};

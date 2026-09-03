@@ -320,7 +320,12 @@ static bool bt_on_gap_event_callback(GapEvent event, void* context) {
     } else if(event.type == GapEventTypePinCodeVerify) {
         ret = bt_pin_code_verify_event_handler(bt, event.data.pin_code);
     } else if(event.type == GapEventTypeUpdateMTU) {
-        bt->max_packet_size = event.data.max_packet_size;
+        // Clamp to the serial characteristic's capacity: a negotiated MTU larger than the
+        // characteristic buffer would make ble_svc_serial_update_tx reject every write.
+        uint16_t mps = event.data.max_packet_size;
+        if(mps > BLE_PROFILE_SERIAL_PACKET_SIZE_MAX) mps = BLE_PROFILE_SERIAL_PACKET_SIZE_MAX;
+        bt->max_packet_size = mps;
+        FURI_LOG_I(TAG, "MTU negotiated, max_packet_size=%u", (unsigned)mps);
         ret = true;
     } else if(event.type == GapEventTypeBeaconStart) {
         bt->beacon_active = true;

@@ -1,3 +1,7 @@
+**This is a Flipper Zero firmware fork that lets a Garmin watch control the Flipper over BLE.** Stock Momentum, plus one opt-in toggle. The watch app it was built for is [Flipper Watch Remote](https://github.com/rz-x/flipper-on-garmin).
+
+![A Flipper Sub-GHz Frequency Analyzer is visible on the Garmin at night while the Flipper stays in a bag](docs/pics/main_02.jpeg)
+
 # Momentum Firmware, Open BLE Pairing edition
 
 A fork of [Momentum Firmware](https://github.com/Next-Flip/Momentum-Firmware) with one feature on
@@ -23,8 +27,8 @@ Same toolchain as Momentum, nothing extra. Linux or macOS, about 10 minutes the 
 (the toolchain download is most of it), under a minute after that.
 
 ```bash
-git clone --recursive -b feature/open-ble-pairing https://github.com/rz-x/Momentum-Firmware.git
-cd Momentum-Firmware
+git clone --recursive -b feature/open-ble-pairing https://github.com/rz-x/momentum-firmware-for-garmin.git
+cd momentum-firmware-for-garmin
 ./fbt updater_package          # builds firmware + the .tgz update bundle into dist/f7-C/
 ```
 

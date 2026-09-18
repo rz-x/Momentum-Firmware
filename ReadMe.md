@@ -129,10 +129,13 @@ Files touched: `targets/f7/ble_glue/gap.{c,h}`, `services/serial_service.c`,
 ## Why not upstream
 
 Momentum's [CONTRIBUTING.md](https://github.com/Next-Flip/Momentum-Firmware/blob/dev/CONTRIBUTING.md)
-bans any AI involvement in contributions, and this feature was built with an AI coding assistant.
-So it lives here as a fork rather than a PR. If someone wants to
-re-implement it by hand and submit, `docs/OpenBlePairing.md` and the commit messages describe
-every change and the reason for it.
+bans any AI involvement in contributions, and this was built with AI help. So it lives here as a
+fork instead of a PR.
+
+No judgement on their rule, it's their project. But in 2026 a blanket AI ban reads to me like
+shooting yourself in the foot: it doesn't filter out bad patches, it filters out the people who
+bother to submit them. Code is either correct and reviewable, or it isn't, and that's readable
+from the diff. Anyway, it's all here, take it or fork it.
 
 ## License
 

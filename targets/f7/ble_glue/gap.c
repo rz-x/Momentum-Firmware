@@ -220,6 +220,22 @@ BleEventFlowStatus ble_event_app_notification(void* pckt) {
                 // is emitted only on ACI_GAP_PAIRING_COMPLETE — which never fires without pairing —
                 // so the bt service would never open the RPC session. Emit it here instead, so an
                 // unbonded central (e.g. a Garmin watch) can actually use RPC.
+                //
+                // But first ask whether this central is allowed at all. With no pairing there is
+                // no authentication of any kind, so this prompt is the only thing standing between
+                // "any BLE device in range" and a full RPC session. The bt service answers from its
+                // allowlist or by asking the user on screen; a refusal terminates the link before
+                // Connected is ever emitted, so RPC never opens for a refused peer.
+                GapEvent request_event = {.type = GapEventTypeConnectionRequest};
+                request_event.data.peer.addr_type = event->Peer_Address_Type;
+                memcpy(request_event.data.peer.addr, event->Peer_Address, GAP_MAC_ADDR_SIZE);
+                if(!gap->on_event_cb(request_event, gap->context)) {
+                    FURI_LOG_W(TAG, "Central refused, terminating link");
+                    // 0x13: Remote User Terminated Connection
+                    aci_gap_terminate(event->Connection_Handle, 0x13);
+                    break;
+                }
+
                 GapEvent connected_event = {.type = GapEventTypeConnected};
                 gap->on_event_cb(connected_event, gap->context);
 

@@ -116,8 +116,6 @@ Files touched: `targets/f7/ble_glue/gap.{c,h}`, `services/serial_service.c`,
 - **Tested on one pair of devices**: Descent Mk2 plus one Flipper Zero. The approval prompt,
   allowlist and Forget menu have been exercised on that pair once. Treat the rest as
   build-verified.
-- **Shallow clone.** This fork has no common git history with upstream yet, so rebasing onto
-  `upstream/dev` needs `git fetch --unshallow` first. Known, not yet done.
 
 ## Known issues
 

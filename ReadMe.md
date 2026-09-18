@@ -129,13 +129,9 @@ Files touched: `targets/f7/ble_glue/gap.{c,h}`, `services/serial_service.c`,
 ## Why not upstream
 
 Momentum's [CONTRIBUTING.md](https://github.com/Next-Flip/Momentum-Firmware/blob/dev/CONTRIBUTING.md)
-bans any AI involvement in contributions, and this was built with AI help. So it lives here as a
-fork instead of a PR.
-
-No judgement on their rule, it's their project. But in 2026 a blanket AI ban reads to me like
-shooting yourself in the foot: it doesn't filter out bad patches, it filters out the people who
-bother to submit them. Code is either correct and reviewable, or it isn't, and that's readable
-from the diff. Anyway, it's all here, take it or fork it.
+bans any AI involvement in contributions, and this was built with AI help, so it lives here as a
+fork instead of a PR - not judging, but in 2026 that rule looks like shooting yourself in the
+foot, IMO.
 
 ## License
 

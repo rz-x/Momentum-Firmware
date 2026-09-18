@@ -30,13 +30,21 @@ GATT service or a bridge app.
 
 When OFF, both paths are byte-for-byte the stock behaviour.
 
-## Security implications
+## Approval prompt and allowlist (2026-09-18)
 
-Enabling this **removes authentication and encryption from the serial link**: any nearby BLE
-central can pair (Just Works) and drive RPC — read the screen, inject input, and use every RPC
-command. That is why it is **off by default, gated behind an explicit toggle, and flagged with a
-reboot**. Users should enable it only while actively using a non-bonding client and disable it
-afterwards. It does not touch any other profile (HID, etc.).
+Enabling this removes authentication and encryption from the serial link. On its own that would
+let any nearby central drive RPC silently, so a check sits in front of it:
+
+- `gap.c` emits `GapEventTypeConnectionRequest` (peer address in `data.peer`) before
+  `GapEventTypeConnected` on a Just Works link. The handler's return value decides.
+- `bt.c` answers from `bt_open_pairing_allowlist.{c,h}` (up to 8 addresses in
+  `/int/.bt_open_allow`) or shows a Deny/Allow dialog with the address. Allow stores the address;
+  Deny makes GAP call `aci_gap_terminate()` before `Connected` is ever emitted.
+- **Momentum → Protocols → Forget BLE Remotes** clears the list (locked while the toggle is off).
+
+Matching is by address, so a central using resolvable private addresses is asked again after
+each rotation. The link itself remains unencrypted; the prompt controls access, not
+confidentiality. Off by default, reboot-flagged, and it does not touch any other profile.
 
 ## Files changed
 
@@ -46,7 +54,10 @@ afterwards. It does not touch any other profile (HID, etc.).
 | `lib/momentum/settings.c` | default `false`; register in the settings serializer |
 | `targets/f7/ble_glue/profiles/serial_profile.c` | when set: `GapPairingNone`, `bonding_mode = false` |
 | `targets/f7/ble_glue/services/serial_service.c` | when set: RX/TX permissions → `ATTR_PERMISSION_NONE` |
-| `applications/main/momentum_app/scenes/momentum_app_scene_protocols.c` | ON/OFF item under Protocols |
+| `applications/main/momentum_app/scenes/momentum_app_scene_protocols.c` | ON/OFF item and "Forget BLE Remotes" under Protocols |
+| `targets/f7/ble_glue/gap.c`, `gap.h` | Connected on Just Works; interval check on unbonded links; MTU exchange + retry; `GapEventTypeConnectionRequest` |
+| `applications/services/bt/bt_service/bt.c` | `max_packet_size` from real MTU; connection-request handler with dialog |
+| `applications/services/bt/bt_service/bt_open_pairing_allowlist.{c,h}` | new: approved-address store in internal flash |
 
 ## Testing
 

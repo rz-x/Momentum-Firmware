@@ -17,6 +17,29 @@ non-bonding central just as well.
 
 That's it. Bluetooth stays on, the Flipper advertises as usual.
 
+## Build it yourself
+
+Same toolchain as Momentum, nothing extra. Linux or macOS, about 10 minutes the first time
+(the toolchain download is most of it), under a minute after that.
+
+```bash
+git clone --recursive -b feature/open-ble-pairing https://github.com/rz-x/Momentum-Firmware.git
+cd Momentum-Firmware
+./fbt updater_package          # builds firmware + the .tgz update bundle into dist/f7-C/
+```
+
+`fbt` fetches its own ARM toolchain on first run, so no `apt install` beyond `git` and `python3`.
+To flash straight over USB instead of copying the bundle by hand:
+
+```bash
+./fbt flash_usb_full           # Flipper connected, qFlipper closed
+```
+
+Editing the feature: the BLE side lives in `targets/f7/ble_glue/`, the prompt and allowlist in
+`applications/services/bt/bt_service/`, the menu item in
+`applications/main/momentum_app/scenes/momentum_app_scene_protocols.c`. `./fbt format` before
+committing, `./fbt lint` to check.
+
 ## How it behaves
 
 The first time a new device connects, the Flipper shows:

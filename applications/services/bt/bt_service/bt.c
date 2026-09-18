@@ -122,17 +122,19 @@ static bool bt_connection_request_event_handler(Bt* bt, uint8_t addr_type, const
     if(!bt->dialog_message) {
         bt->dialog_message = dialog_message_alloc();
     }
+    // 128x64: header on top, one short line of body, buttons at the bottom. Three lines of body
+    // plus a header overflowed into the buttons and was unreadable.
     FuriString* text = furi_string_alloc_printf(
-        "Unknown device wants\nto control this Flipper\n%02X:%02X:%02X:%02X:%02X:%02X",
+        "Watch %02X%02X:%02X%02X:%02X%02X\nwants to control Flipper",
         addr[5],
         addr[4],
         addr[3],
         addr[2],
         addr[1],
         addr[0]);
-    dialog_message_set_header(bt->dialog_message, "Allow BLE remote?", 64, 2, AlignCenter, AlignTop);
+    dialog_message_set_header(bt->dialog_message, "Allow BLE remote?", 64, 3, AlignCenter, AlignTop);
     dialog_message_set_text(
-        bt->dialog_message, furi_string_get_cstr(text), 64, 30, AlignCenter, AlignCenter);
+        bt->dialog_message, furi_string_get_cstr(text), 64, 28, AlignCenter, AlignCenter);
     dialog_message_set_buttons(bt->dialog_message, "Deny", NULL, "Allow");
     DialogMessageButton button = dialog_message_show(bt->dialogs, bt->dialog_message);
     // Reset the message so the pairing-PIN dialogs, which share it, are not left with our header.

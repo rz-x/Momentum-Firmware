@@ -1,16 +1,25 @@
-> **This is a Flipper Zero firmware fork that lets a Garmin watch control the Flipper over BLE.**
-> Stock Momentum, plus one opt-in toggle ("Open BLE Pairing") that lets a non-bonding BLE central
-> — a Garmin watch, say — drive the Flipper over RPC, with an on-screen approval prompt.
->
-> **This branch (`dev`) is untouched upstream Momentum. All the work lives on
-> [`feature/open-ble-pairing`](../../tree/feature/open-ble-pairing) — start with
-> [its ReadMe](../../blob/feature/open-ble-pairing/ReadMe.md) and
-> [docs/OpenBlePairing.md](../../blob/feature/open-ble-pairing/docs/OpenBlePairing.md).**
->
-> The watch app it was built for is [Flipper Watch Remote](https://github.com/rz-x/flipper-on-garmin).
-> Not affiliated with the Momentum team. Everything below is Momentum's own ReadMe.
+# Momentum Firmware for Garmin
+
+**A Flipper Zero firmware fork that lets a Garmin watch control the Flipper over BLE.**
 
 ![A Flipper Sub-GHz Frequency Analyzer is visible on the Garmin at night while the Flipper stays in a bag](docs/pics/main_02.jpeg)
+
+Stock Momentum plus one opt-in toggle, **Open BLE Pairing**: a BLE central that can't bond — a
+Garmin watch, say — gets to drive the Flipper over RPC, and the Flipper asks you on screen before
+it allows it. Off by default, everything else untouched.
+
+### Where things live
+
+| | |
+|---|---|
+| The code | [`feature/open-ble-pairing`](../../tree/feature/open-ble-pairing) — every change is on that branch |
+| How to install & build | [ReadMe on that branch](../../blob/feature/open-ble-pairing/ReadMe.md) |
+| How it works, in detail | [`docs/OpenBlePairing.md`](../../blob/feature/open-ble-pairing/docs/OpenBlePairing.md) |
+| The watch app | [Flipper Watch Remote](https://github.com/rz-x/flipper-on-garmin) |
+
+> Not affiliated with the Momentum team. Everything below this line is Momentum's own ReadMe.
+
+---
 
 <p align="center">
   <picture>

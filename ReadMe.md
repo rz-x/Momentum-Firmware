@@ -1,16 +1,22 @@
-**This is a Flipper Zero firmware fork that lets a Garmin watch control the Flipper over BLE.** Stock Momentum, plus one opt-in toggle. The watch app it was built for is [Flipper Watch Remote](https://github.com/rz-x/flipper-on-garmin).
+# Momentum Firmware for Garmin
+
+**A Flipper Zero firmware fork that lets a Garmin watch control the Flipper over BLE.**
 
 ![A Flipper Sub-GHz Frequency Analyzer is visible on the Garmin at night while the Flipper stays in a bag](docs/pics/main_02.jpeg)
 
-# Momentum Firmware, Open BLE Pairing edition
-
 A fork of [Momentum Firmware](https://github.com/Next-Flip/Momentum-Firmware) with one feature on
 top: a BLE central that can't bond (a Garmin watch, say) can drive the Flipper over RPC, and the
-Flipper asks you first. Everything else is stock Momentum. Not affiliated with the Momentum team.
+Flipper asks you first. Off by default, everything else is stock Momentum. Not affiliated with
+the Momentum team.
 
-Built for [Flipper Watch Remote](https://github.com/rz-x/flipper-on-garmin), a Connect IQ app that
-mirrors the Flipper screen on a Garmin and sends the buttons back. Works with any other
-non-bonding central just as well.
+### Where things live
+
+| | |
+|---|---|
+| The code | this branch, [`feature/open-ble-pairing`](../../tree/feature/open-ble-pairing) |
+| How it works, in detail | [`docs/OpenBlePairing.md`](docs/OpenBlePairing.md) |
+| The watch app | [Flipper Watch Remote](https://github.com/rz-x/flipper-on-garmin) — the Connect IQ app that mirrors the Flipper screen and sends the buttons back |
+| Unmodified upstream | the [`dev`](../../tree/dev) branch |
 
 ## Install
 

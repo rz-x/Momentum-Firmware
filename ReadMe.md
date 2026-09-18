@@ -129,8 +129,8 @@ Files touched: `targets/f7/ble_glue/gap.{c,h}`, `services/serial_service.c`,
 ## Why not upstream
 
 Momentum's [CONTRIBUTING.md](https://github.com/Next-Flip/Momentum-Firmware/blob/dev/CONTRIBUTING.md)
-bans any AI involvement in contributions, and this feature was built with an AI coding assistant
-(the commit trailers say so). So it lives here as a fork rather than a PR. If someone wants to
+bans any AI involvement in contributions, and this feature was built with an AI coding assistant.
+So it lives here as a fork rather than a PR. If someone wants to
 re-implement it by hand and submit, `docs/OpenBlePairing.md` and the commit messages describe
 every change and the reason for it.
 

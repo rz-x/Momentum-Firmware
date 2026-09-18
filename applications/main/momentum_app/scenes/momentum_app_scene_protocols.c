@@ -1,4 +1,5 @@
 #include "../momentum_app.h"
+#include <bt/bt_service/bt_open_pairing_allowlist.h>
 
 enum VarItemListIndex {
     VarItemListIndexSubghzFreqs,
@@ -7,6 +8,7 @@ enum VarItemListIndex {
     VarItemListIndexGpioPins,
     VarItemListIndexFileNamingPrefix,
     VarItemListIndexOpenBlePairing,
+    VarItemListIndexOpenBleForget,
 };
 
 void momentum_app_scene_protocols_var_item_list_callback(void* context, uint32_t index) {
@@ -90,6 +92,11 @@ void momentum_app_scene_protocols_on_enter(void* context) {
     variable_item_set_current_value_index(item, momentum_settings.open_ble_pairing);
     variable_item_set_current_value_text(item, momentum_settings.open_ble_pairing ? "ON" : "OFF");
 
+    item = variable_item_list_add(var_item_list, "Forget BLE Remotes", 0, NULL, app);
+    variable_item_set_current_value_text(item, ">");
+    variable_item_set_locked(
+        item, !momentum_settings.open_ble_pairing, "Enable Open BLE\nPairing first");
+
     variable_item_list_set_enter_callback(
         var_item_list, momentum_app_scene_protocols_var_item_list_callback, app);
 
@@ -164,6 +171,24 @@ bool momentum_app_scene_protocols_on_event(void* context, SceneManagerEvent even
             scene_manager_set_scene_state(app->scene_manager, MomentumAppSceneProtocolsGpio, 0);
             scene_manager_next_scene(app->scene_manager, MomentumAppSceneProtocolsGpio);
             break;
+        case VarItemListIndexOpenBleForget: {
+            uint8_t n = bt_open_pairing_allowlist_count();
+            DialogMessage* msg = dialog_message_alloc();
+            FuriString* text = furi_string_alloc_printf(
+                "%u approved device%s.\nEach will be asked\nfor permission again.",
+                n,
+                n == 1 ? "" : "s");
+            dialog_message_set_header(msg, "Forget BLE remotes?", 64, 4, AlignCenter, AlignTop);
+            dialog_message_set_text(
+                msg, furi_string_get_cstr(text), 64, 36, AlignCenter, AlignCenter);
+            dialog_message_set_buttons(msg, "No", NULL, "Forget");
+            if(dialog_message_show(app->dialogs, msg) == DialogMessageButtonRight) {
+                bt_open_pairing_allowlist_clear();
+            }
+            furi_string_free(text);
+            dialog_message_free(msg);
+            break;
+        }
         default:
             break;
         }

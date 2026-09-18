@@ -1,4 +1,5 @@
 #include "bt_i.h"
+#include "bt_open_pairing_allowlist.h"
 #include "bt_keys_storage.h"
 
 #include <core/check.h>
@@ -104,6 +105,47 @@ static void bt_pin_code_hide(Bt* bt) {
     if(bt->pin_code_view_port && view_port_is_enabled(bt->pin_code_view_port)) {
         view_port_enabled_set(bt->pin_code_view_port, false);
     }
+}
+
+// Open BLE Pairing: decide whether an unauthenticated central may proceed to RPC. Runs on the GAP
+// thread and blocks on the dialog exactly like the numeric-comparison handler below does; the link
+// stays up (but serviceless) while the user decides.
+static bool bt_connection_request_event_handler(Bt* bt, uint8_t addr_type, const uint8_t* addr) {
+    furi_assert(bt);
+    if(bt_open_pairing_allowlist_contains(addr_type, addr)) {
+        FURI_LOG_I(TAG, "Central known, allowing");
+        return true;
+    }
+
+    notification_message(bt->notification, &sequence_display_backlight_on);
+
+    if(!bt->dialog_message) {
+        bt->dialog_message = dialog_message_alloc();
+    }
+    FuriString* text = furi_string_alloc_printf(
+        "Unknown device wants\nto control this Flipper\n%02X:%02X:%02X:%02X:%02X:%02X",
+        addr[5],
+        addr[4],
+        addr[3],
+        addr[2],
+        addr[1],
+        addr[0]);
+    dialog_message_set_header(bt->dialog_message, "Allow BLE remote?", 64, 2, AlignCenter, AlignTop);
+    dialog_message_set_text(
+        bt->dialog_message, furi_string_get_cstr(text), 64, 30, AlignCenter, AlignCenter);
+    dialog_message_set_buttons(bt->dialog_message, "Deny", NULL, "Allow");
+    DialogMessageButton button = dialog_message_show(bt->dialogs, bt->dialog_message);
+    // Reset the message so the pairing-PIN dialogs, which share it, are not left with our header.
+    dialog_message_set_header(bt->dialog_message, NULL, 0, 0, AlignLeft, AlignTop);
+    furi_string_free(text);
+
+    bool allowed = (button == DialogMessageButtonRight);
+    if(allowed) {
+        bt_open_pairing_allowlist_add(addr_type, addr);
+    } else {
+        FURI_LOG_W(TAG, "User denied central");
+    }
+    return allowed;
 }
 
 static bool bt_pin_code_verify_event_handler(Bt* bt, uint32_t pin) {
@@ -317,6 +359,9 @@ static bool bt_on_gap_event_callback(GapEvent event, void* context) {
         furi_check(
             furi_message_queue_put(bt->message_queue, &message, FuriWaitForever) == FuriStatusOk);
         ret = true;
+    } else if(event.type == GapEventTypeConnectionRequest) {
+        ret = bt_connection_request_event_handler(
+            bt, event.data.peer.addr_type, event.data.peer.addr);
     } else if(event.type == GapEventTypePinCodeVerify) {
         ret = bt_pin_code_verify_event_handler(bt, event.data.pin_code);
     } else if(event.type == GapEventTypeUpdateMTU) {

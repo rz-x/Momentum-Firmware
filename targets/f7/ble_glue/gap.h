@@ -18,6 +18,10 @@ extern "C" {
 
 typedef enum {
     GapEventTypeConnected,
+    // Emitted before GapEventTypeConnected on a Just Works (Open BLE Pairing) link. The handler
+    // returns true to accept the central or false to have the link terminated before any service
+    // — RPC in particular — becomes reachable. Carries the peer address in data.peer.
+    GapEventTypeConnectionRequest,
     GapEventTypeDisconnected,
     GapEventTypeStartAdvertising,
     GapEventTypeStopAdvertising,
@@ -31,6 +35,10 @@ typedef enum {
 typedef union {
     uint32_t pin_code;
     uint16_t max_packet_size;
+    struct {
+        uint8_t addr_type;
+        uint8_t addr[GAP_MAC_ADDR_SIZE];
+    } peer;
 } GapEventData;
 
 typedef struct {

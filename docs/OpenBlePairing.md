@@ -8,18 +8,18 @@ service and its RPC. Off by default; when off, the stock secure behaviour is unc
 The BLE serial service (`serial_service.c`) declares its RX/TX characteristics with
 `ATTR_PERMISSION_AUTHEN_READ | ATTR_PERMISSION_AUTHEN_WRITE`, and the serial profile
 (`serial_profile.c`) pairs with `GapPairingPinCodeShow` (MITM required). A central that cannot
-perform SMP bonding therefore cannot read TX, write RX, or subscribe — it cannot use RPC at all.
+perform SMP bonding therefore cannot read TX, write RX, or subscribe - it cannot use RPC at all.
 
 Some hosts have no bonding stack. The concrete case that motivated this: **Garmin Connect IQ**,
 whose `Toybox.BluetoothLowEnergy` has no SMP/bonding and is always the GATT central. This is not
-Garmin-specific — any minimal embedded central hits the same wall.
+Garmin-specific - any minimal embedded central hits the same wall.
 
 This setting opens the existing, well-tested RPC path to those clients without adding a second
 GATT service or a bridge app.
 
 ## What it does when enabled
 
-**Momentum → Protocols → Open BLE Pairing → ON** (then restart the BT stack — the setting flags
+**Momentum → Protocols → Open BLE Pairing → ON** (then restart the BT stack - the setting flags
 `require_reboot`):
 
 - **Pairing** drops to Just Works, bonding off (`serial_profile.c`): `GapPairingNone`,

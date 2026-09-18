@@ -293,7 +293,7 @@ static void bt_rpc_send_bytes_callback(void* context, uint8_t* bytes, size_t byt
         }
         // Wait for the client's per-packet confirmation (INDICATE). This guarantees delivery: a
         // dropped packet would shift the remainder of the frame. Cheap now that max_packet_size
-        // matches the real MTU — the earlier "INDICATE is unusably slow" was the 486-byte
+        // matches the real MTU - the earlier "INDICATE is unusably slow" was the 486-byte
         // truncation bug, not the confirmations.
         // We want BT_RPC_EVENT_DISCONNECTED to stick, so don't clear.
         uint32_t event_flag = furi_event_flag_wait(

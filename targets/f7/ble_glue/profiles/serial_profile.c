@@ -70,7 +70,7 @@ static void
 
     furi_check(config);
     memcpy(config, &serial_template_config, sizeof(GapConfig));
-    // Momentum: Open BLE Pairing (opt-in) — let non-bonding centrals (e.g. Garmin
+    // Momentum: Open BLE Pairing (opt-in) - let non-bonding centrals (e.g. Garmin
     // Connect IQ) reach the serial/RPC service by dropping bonding + MITM to Just Works.
     if(momentum_settings.open_ble_pairing) {
         config->bonding_mode = false;

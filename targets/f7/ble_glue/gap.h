@@ -20,7 +20,7 @@ typedef enum {
     GapEventTypeConnected,
     // Emitted before GapEventTypeConnected on a Just Works (Open BLE Pairing) link. The handler
     // returns true to accept the central or false to have the link terminated before any service
-    // — RPC in particular — becomes reachable. Carries the peer address in data.peer.
+    // - RPC in particular - becomes reachable. Carries the peer address in data.peer.
     GapEventTypeConnectionRequest,
     GapEventTypeDisconnected,
     GapEventTypeStartAdvertising,

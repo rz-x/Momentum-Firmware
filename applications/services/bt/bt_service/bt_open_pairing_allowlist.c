@@ -87,7 +87,7 @@ void bt_open_pairing_allowlist_add(
     }
     if(f.count >= BT_OPEN_PAIRING_ALLOWLIST_MAX) {
         // Full: drop the oldest. Eight approved watches is already far more than one person owns;
-        // the alternative — refusing to remember a new one — would prompt on every connection.
+        // the alternative - refusing to remember a new one - would prompt on every connection.
         memmove(&f.entries[0], &f.entries[1], (f.count - 1) * sizeof(AllowEntry));
         f.count--;
     }

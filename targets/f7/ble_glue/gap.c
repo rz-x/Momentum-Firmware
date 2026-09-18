@@ -87,8 +87,8 @@ static void gap_verify_connection_parameters(Gap* gap) {
     // We don't care about upper bound till connection become secure...
     // ...EXCEPT on an unbonded Just Works link, where the connection never becomes "secure" at all
     // (is_secure is only set from ACI_GAP_SLAVE_SECURITY_INITIATED, which requires pairing). Without
-    // this, such a link silently accepts whatever interval the central picked — Garmin Connect IQ
-    // hands out ~500 ms — and never asks for better, so a 1 KB screen frame takes ~a minute.
+    // this, such a link silently accepts whatever interval the central picked - Garmin Connect IQ
+    // hands out ~500 ms - and never asks for better, so a 1 KB screen frame takes ~a minute.
     if(gap->is_secure || gap->config->pairing_method == GapPairingNone) {
         negotiation_failed |= connection_interval_max < gap->connection_params.conn_interval;
     }
@@ -217,7 +217,7 @@ BleEventFlowStatus ble_event_app_notification(void* pckt) {
                 aci_gap_slave_security_req(event->Connection_Handle);
             } else {
                 // Momentum: Open BLE Pairing (Just Works, no pairing). Normally GapEventTypeConnected
-                // is emitted only on ACI_GAP_PAIRING_COMPLETE — which never fires without pairing —
+                // is emitted only on ACI_GAP_PAIRING_COMPLETE - which never fires without pairing -
                 // so the bt service would never open the RPC session. Emit it here instead, so an
                 // unbonded central (e.g. a Garmin watch) can actually use RPC.
                 //
@@ -241,7 +241,7 @@ BleEventFlowStatus ble_event_app_notification(void* pckt) {
 
                 // Ask the central to raise the ATT MTU. Some centrals (Connect IQ) never initiate
                 // the exchange themselves and would leave us at the 23-byte default, i.e. 20 usable
-                // bytes per packet — a 1 KB screen frame then costs ~52 round trips. If the peer
+                // bytes per packet - a 1 KB screen frame then costs ~52 round trips. If the peer
                 // agrees to a larger MTU, ACI_ATT_EXCHANGE_MTU_RESP raises max_packet_size and the
                 // same frame needs a fraction of the packets.
                 tBleStatus mtu_status = aci_gatt_exchange_config(event->Connection_Handle);
@@ -487,9 +487,9 @@ static void gap_advertise_start(GapState new_state) {
         min_interval = 0x0640; // 1 s
         max_interval = 0x0fa0; // 2.5 s
     }
-    // Momentum: Open BLE Pairing (opt-in) — force the fast advertising interval even in the
+    // Momentum: Open BLE Pairing (opt-in) - force the fast advertising interval even in the
     // low-power state. Low-duty-cycle central scanners (notably Garmin Connect IQ) reliably
-    // catch ~100 ms beacons but miss the stock 1–2.5 s low-power beacons, so the watch never
+    // catch ~100 ms beacons but miss the stock 1-2.5 s low-power beacons, so the watch never
     // discovers the Flipper. Costs a little standby battery while the toggle is ON; stock timing
     // is unchanged when OFF.
     if(momentum_settings.open_ble_pairing) {

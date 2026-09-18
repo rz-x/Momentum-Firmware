@@ -10,7 +10,7 @@ extern "C" {
 /** Allowlist of centrals approved for Open BLE Pairing.
  *
  * Open BLE Pairing (Momentum, opt-in) drops the serial/RPC profile to Just Works with no bonding so
- * that a central without SMP support — a Garmin Connect IQ watch — can use RPC at all. Without any
+ * that a central without SMP support - a Garmin Connect IQ watch - can use RPC at all. Without any
  * further check that means *every* BLE central in radio range can open an RPC session, which is
  * full control of the device. This module is the check: the first time an unknown central
  * connects the user is asked on the Flipper's screen, and an approved address is remembered here

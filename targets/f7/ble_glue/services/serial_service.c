@@ -164,7 +164,7 @@ BleServiceSerial* ble_svc_serial_start(void) {
         free(serial_svc);
         return NULL;
     }
-    // Momentum: Open BLE Pairing (opt-in) — register RX/TX without authentication so a
+    // Momentum: Open BLE Pairing (opt-in) - register RX/TX without authentication so a
     // non-bonding central can use them. Copy the const params and relax permissions.
     BleGattCharacteristicParams chars[SerialSvcGattCharacteristicCount];
     memcpy(chars, ble_svc_serial_chars, sizeof(chars));
